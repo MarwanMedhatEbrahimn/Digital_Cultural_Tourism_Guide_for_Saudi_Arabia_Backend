@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Admin {
+  admin_id              Int                    @id @default(autoincrement())
+  name                  String                 @db.VarChar(255)
+  email                 String                 @unique(map: "email") @db.VarChar(255)
+  password              String                 @db.VarChar(255)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @default(now()) @updatedAt
+  categories            Category[]
+  cities                City[]
+  options               Option[]
+  places                Place[]
+  questions             Question[]
+  suggestedDestinations SuggestedDestination[]
+  tourists              Tourist[]
+
+  @@index([email], map: "idx_admin_email")
+  @@map("admins")
+}
+
+model Tourist {
+  tourist_id Int        @id @default(autoincrement())
+  name       String     @db.VarChar(255)
+  email      String     @unique(map: "email") @db.VarChar(255)
+  password   String     @db.VarChar(255)
+  admin_id   Int?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @default(now()) @updatedAt
+  activities Activity[]
+  likes      Like[]
+  admin      Admin?     @relation(fields: [admin_id], references: [admin_id], onUpdate: NoAction, map: "fk_tourist_admin")
+
+  @@index([admin_id], map: "idx_tourist_admin")
+  @@index([email], map: "idx_tourist_email")
+  @@map("tourists")
+}
+
+model City {
+  city_id        Int            @id @default(autoincrement())
+  name           String         @db.VarChar(255)
+  name_ar        String?        @db.VarChar(255)
+  description    String?        @db.Text
+  description_ar String?        @db.Text
+  admin_id       Int
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
+  admin          Admin          @relation(fields: [admin_id], references: [admin_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_city_admin")
+  images         CityImage[]
+  places         Place[]
+  cityCategories CityCategory[]
+
+  @@index([admin_id], map: "idx_city_admin")
+  @@map("cities")
+}
+
+model CityImage {
+  image_id  Int      @id @default(autoincrement())
+  url       String   @db.VarChar(500)
+  city_id   Int
+  createdAt DateTime @default(now())
+  city      City     @relation(fields: [city_id], references: [city_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_city_image_city")
+
+  @@index([city_id], map: "idx_city_image_city")
+  @@map("city_images")
+}
+
+model Category {
+  cate_id        Int            @id @default(autoincrement())
+  name           String         @db.VarChar(255)
+  name_ar        String?        @db.VarChar(255)
+  admin_id       Int
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
+  admin          Admin          @relation(fields: [admin_id], references: [admin_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_category_admin")
+  places         Place[]
+  cityCategories CityCategory[]
+
+  @@index([admin_id], map: "idx_category_admin")
+  @@map("categories")
+}
+
+model CityCategory {
+  city_id   Int
+  cate_id   Int
+  createdAt DateTime @default(now())
+  city      City     @relation(fields: [city_id], references: [city_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_city_category_city")
+  category  Category @relation(fields: [cate_id], references: [cate_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_city_category_category")
+
+  @@id([city_id, cate_id])
+  @@index([city_id], map: "idx_city_category_city")
+  @@index([cate_id], map: "idx_city_category_category")
+  @@map("city_categories")
+}
+
+model Place {
+  place_id       Int          @id @default(autoincrement())
+  name           String       @unique(map: "name") @db.VarChar(255)
+  name_ar        String?      @db.VarChar(255)
+  description    String?      @db.Text
+  description_ar String?      @db.Text
+  location       String?      @db.VarChar(500)
+  location_ar    String?      @db.VarChar(500)
+  admin_id       Int
+  cate_id        Int
+  city_id        Int
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+  images         PlaceImage[]
+  likes          Like[]
+  admin          Admin        @relation(fields: [admin_id], references: [admin_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_place_admin")
+  category       Category     @relation(fields: [cate_id], references: [cate_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_place_category")
+  city           City         @relation(fields: [city_id], references: [city_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_place_city")
+
+  @@index([admin_id], map: "idx_place_admin")
+  @@index([cate_id], map: "idx_place_category")
+  @@index([city_id], map: "idx_place_city")
+  @@map("places")
+}
+
+model PlaceImage {
+  image_id  Int      @id @default(autoincrement())
+  url       String   @db.VarChar(500)
+  place_id  Int
+  createdAt DateTime @default(now())
+  place     Place    @relation(fields: [place_id], references: [place_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_place_image_place")
+
+  @@index([place_id], map: "idx_place_image_place")
+  @@map("place_images")
+}
+
+model Activity {
+  activity_id Int      @id @default(autoincrement())
+  day_number  Int
+  description String?  @db.Text
+  tourist_id  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  tourist     Tourist  @relation(fields: [tourist_id], references: [tourist_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_activity_tourist")
+
+  @@index([tourist_id], map: "idx_activity_tourist")
+  @@map("activities")
+}
+
+model Question {
+  ques_id   Int      @id @default(autoincrement())
+  text      String   @db.Text
+  admin_id  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  options   Option[]
+  admin     Admin    @relation(fields: [admin_id], references: [admin_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_question_admin")
+
+  @@index([admin_id], map: "idx_question_admin")
+  @@map("questions")
+}
+
+model Option {
+  option_id            Int                   @id @default(autoincrement())
+  text                 String                @db.Text
+  admin_id             Int
+  ques_id              Int
+  sug_des_id           Int?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @default(now()) @updatedAt
+  admin                Admin                 @relation(fields: [admin_id], references: [admin_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_option_admin")
+  question             Question              @relation(fields: [ques_id], references: [ques_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_option_question")
+  suggestedDestination SuggestedDestination? @relation(fields: [sug_des_id], references: [sug_des_id], onUpdate: NoAction, map: "fk_option_suggested_destination")
+
+  @@index([admin_id], map: "idx_option_admin")
+  @@index([ques_id], map: "idx_option_question")
+  @@index([sug_des_id], map: "idx_option_suggested_destination")
+  @@map("options")
+}
+
+model SuggestedDestination {
+  sug_des_id  Int      @id @default(autoincrement())
+  topic       String   @db.VarChar(255)
+  description String?  @db.Text
+  admin_id    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  options     Option[]
+  admin       Admin    @relation(fields: [admin_id], references: [admin_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_suggested_destination_admin")
+
+  @@index([admin_id], map: "idx_suggested_destination_admin")
+  @@map("suggested_destinations")
+}
+
+model Like {
+  tourist_id Int
+  place_id   Int
+  createdAt  DateTime @default(now())
+  place      Place    @relation(fields: [place_id], references: [place_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_like_place")
+  tourist    Tourist  @relation(fields: [tourist_id], references: [tourist_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_like_tourist")
+
+  @@id([tourist_id, place_id])
+  @@index([place_id], map: "idx_like_place")
+  @@index([tourist_id], map: "idx_like_tourist")
+  @@map("likes")
+}
